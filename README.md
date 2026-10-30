@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # crypto-x509-analyzer
 A tool to parse and analyze X.509 certificates, highlighting potential vulnerabilities such as weak signature algorithms, expired dates, or missing critical extensions. - Focused on Basic cryptographic operations
 
