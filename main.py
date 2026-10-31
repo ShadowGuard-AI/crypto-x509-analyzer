@@ -111,12 +111,14 @@ def analyze_certificate(cert_path):
     except Exception as e:
         logging.error(f"Error reading Subject Alternative Name extension: {e}")
 
-    # Verify certificate signature. The old verifier() context manager was
+    # Self-signed consistency check. The old verifier() context manager was
     # removed from cryptography, and verify() takes a different argument
-    # shape per key family, so dispatch on the public key type. A
-    # self-signed certificate verifies against its own key; for a CA issued
-    # certificate this checks the signature against the subject key, which
-    # is a consistency check, not chain validation.
+    # shape per key family, so dispatch on the public key type. The key
+    # used here is the certificate's own public key, so this is a real
+    # signature check only for a self-signed certificate. For a CA issued
+    # certificate the signature was made with the issuer's key, so this
+    # check fails on sound certificates and must not be read as a
+    # signature verdict; the log lines below say so in those words.
     try:
         public_key = cert.public_key()
         hash_alg = cert.signature_hash_algorithm
@@ -130,12 +132,12 @@ def analyze_certificate(cert_path):
             public_key.verify(cert.signature, cert.tbs_certificate_bytes, hash_alg)
         else:
             raise TypeError(f"Unsupported public key type: {type(public_key).__name__}")
-        logging.info("Certificate signature is valid.")
+        logging.info("Self-signed consistency check passed: the signature verifies against the certificate's own public key. This is not an issuer or chain verification.")
 
     except InvalidSignature:
-        logging.error("Certificate signature is invalid.")
+        logging.error("Self-signed consistency check failed: the signature does not verify against the certificate's own public key. For a CA issued certificate that failure is expected, because its signature was made with the issuer's key; a real signature verdict for such a certificate needs the issuer certificate, which this tool does not take as an argument.")
     except Exception as e:
-        logging.error(f"Error verifying certificate signature: {e}")
+        logging.error(f"Error during the self-signed consistency check against the certificate's own public key: {e}")
 
     # Check if CA flag is consistent with usage.
     try:
