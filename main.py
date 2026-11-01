@@ -62,6 +62,10 @@ def analyze_certificate(cert_path):
     if cert.not_valid_before_utc > cert.not_valid_after_utc:
         logging.warning("Certificate validity start date is after the end date. This is invalid.")
 
+    # Both checks read this machine's clock. On a host whose time is
+    # wrong, a sound certificate can be reported expired or not yet
+    # valid, so these two warnings are only as trustworthy as the
+    # clock of the machine running the scan.
     if cert.not_valid_before_utc.timestamp() > time.time():
         logging.warning("Certificate is not yet valid.")
 
@@ -73,6 +77,10 @@ def analyze_certificate(cert_path):
     # algorithm check keys off the OIDs for md5WithRSAEncryption,
     # sha1WithRSAEncryption and dsaWithSHA1.
     sig_oid = cert.signature_algorithm_oid.dotted_string
+    # This set is RSA with MD5, RSA with SHA1, and DSA with SHA1 only.
+    # Other weak signature choices, such as ECDSA with SHA1 or RSA with
+    # MD2, are not in it and pass this check without a warning, so no
+    # warning here means none of these three, not no weak algorithm.
     weak_sig_oids = {"1.2.840.113549.1.1.4", "1.2.840.113549.1.1.5", "1.2.840.10040.4.3"}
     logging.info(f"Signature Algorithm OID: {sig_oid}")
     if sig_oid in weak_sig_oids:
@@ -140,6 +148,11 @@ def analyze_certificate(cert_path):
         logging.error(f"Error during the self-signed consistency check against the certificate's own public key: {e}")
 
     # Check if CA flag is consistent with usage.
+    # Both extensions are fetched a second time here rather than
+    # reusing the values read above, and a missing one now passes in
+    # silence, where the earlier reads logged a warning or an info
+    # line for the same absence. The two sections can therefore read
+    # differently about the same certificate.
     try:
         key_usage = cert.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).value
         basic_constraints = cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS).value
