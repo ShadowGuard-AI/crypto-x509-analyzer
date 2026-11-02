@@ -3,161 +3,117 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crypto X509 Analyzer: what it is, how it runs, where it stops</title>
-<meta name="description" content="Crypto X509 Analyzer is one of my projects. The README in the repo is short, so this page sticks to what the files themselves show.">
+<title>crypto-x509-analyzer: Bamboo Forest After Rain</title>
 <style>
-:root {
-  --bg: #181c3a; --panel: #22284e; --ink: #eeeef6;
-  --mut: #2d3669;
-  --acc: #7eb8f7; --acc2: #f7ba7e;
-  --line: #22284e;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink);
-  font-family: Charter, Georgia, serif; line-height: 1.55; }
-code, pre, .mono { font-family: 'DejaVu Sans Mono', monospace; }
-a { color: var(--acc2); }
-.hero { padding: 3rem 6vw 1rem; }
-.hero img.banner { width: 100%; height: auto; border: 1px solid var(--line);
-  border-radius: 10px; }
-.logo { width: 92px; height: 92px; border-radius: 18px;
-  border: 1px solid var(--line); }
-h1 { font-size: 2.4rem; margin: 0.4em 0 0.1em; }
-h2 { border-bottom: 2px solid var(--acc); padding-bottom: 0.2em;
-  margin-top: 2em; }
-.lede { font-size: 1.15rem; max-width: 62ch; }
-main { padding: 0 6vw 3rem; max-width: 1180px; margin: 0 auto; }
-.grid { display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-.card { background: var(--panel); border: 1px solid var(--line);
-  border-radius: 12px; padding: 1rem 1.2rem; }
-.card.pop { animation: rise 0.7s ease both; }
-@keyframes rise { from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; } }
-pre.code { background: #101014; color: #e8e6df; padding: 1rem 1.2rem;
-  border-radius: 12px; overflow-x: auto; font-size: 0.86rem;
-  border-left: 5px solid var(--acc); }
-table { border-collapse: collapse; width: 100%; }
-td, th { border-bottom: 1px solid var(--line); padding: 0.45rem 0.6rem;
-  text-align: left; }
-.shots { display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.shots img { width: 100%; height: auto; border: 1px solid var(--line);
-  border-radius: 10px; background: #f4f1e8; }
-footer { padding: 2rem 6vw; border-top: 1px solid var(--line);
-  color: var(--mut); }
-.rail { display: flex; gap: 1.2rem; align-items: flex-start; }
-.rail nav { position: sticky; top: 1rem; min-width: 180px; }
-@media (max-width: 760px) { .rail { flex-direction: column; }
-  .rail nav { position: static; } }
-@media (prefers-reduced-motion: reduce) {
-  .card.pop { animation: none; } * { scroll-behavior: auto; } }
+@font-face { font-family: "Bona Nova SC"; src: url("fonts/BonaNovaSC.ttf"); }
+@font-face { font-family: "Archivo"; src: url("fonts/Archivo.ttf"); }
+body { margin: 0; background: #dcebf0; color: #14201a; font-family: "Archivo", sans-serif; }
+header { text-align: center; padding: 2rem 1rem 0.5rem; }
+header img.intro { max-width: 100%; border: 3px solid #2e7d32; }
+h1, h2 { font-family: "Bona Nova SC", serif; color: #2e7d32; }
+h1 { font-size: 2.2rem; margin: 1rem 0 0.2rem; }
+.tagline { color: #3c5a48; margin: 0 0 1rem; }
+main { max-width: 880px; margin: 0 auto; padding: 0 1rem 3rem; }
+section { background: #cfe0e8; border: 1px solid #2e7d32; border-radius: 6px; padding: 1.2rem 1.4rem; margin: 1.4rem 0; }
+section h2 { margin-top: 0; border-bottom: 2px solid #2e7d32; padding-bottom: 0.3rem; }
+.marker { display: inline-block; background: #d9a441; color: #14201a; border-radius: 50%; width: 1.5rem; height: 1.5rem; text-align: center; line-height: 1.5rem; margin-right: 0.5rem; font-weight: bold; }
+.warn { background: #f6d9e2; border: 1px solid #c2185b; border-radius: 6px; padding: 0.8rem 1rem; }
+code, pre { font-family: "Archivo", monospace; background: #eef5f7; }
+pre { padding: 1rem; overflow-x: auto; white-space: pre-wrap; }
+.btn { display: inline-block; background: #2e7d32; color: #eaf3ec; font-family: "Bona Nova SC", serif; padding: 0.45rem 1.4rem; border-radius: 999px; border-top: 4px solid #d9a441; border-bottom: 4px solid #d9a441; margin: 0.3rem 0.4rem 0.3rem 0; }
+.divider { border: none; border-top: 2px dotted #2e7d32; margin: 0.4rem auto; width: 60%; }
+footer { text-align: center; color: #3c5a48; padding: 1rem; }
+img.mark { max-height: 120px; }
 </style>
 </head>
-<body class="layout-split">
-<!-- This page exists for crypto-x509-analyzer alone: the layout (split-hero),
-     the colors, and the type were picked for this project, not
-     shared with the other project pages. The code block below is
-     copied from the file it names, line for line. If it looks
-     plain, that is because the project is plain, and I would
-     rather the page match the project than dress it up. The one
-     thing I will not do here is oversell: what this project does
-     not do is stated on the page, not hidden from it. -->
-<header class="hero">
-  <img class="logo" src="assets/logo.png" alt="Crypto X509 Analyzer logo">
-  <img class="banner" src="assets/banner.png" alt="">
-  <h1>Crypto X509 Analyzer</h1>
-  <p class="mono"><a href="https://github.com/ShadowGuard-AI/crypto-x509-analyzer">github.com/ShadowGuard-AI/crypto-x509-analyzer</a></p>
+<body>
+<header>
+<img class="intro" src="intro-banner.png" alt="Bamboo grove after rain, no lettering">
+<h1>crypto-x509-analyzer: Bamboo Forest After Rain</h1>
+<p class="tagline">One certificate at a time, read segment by segment, the way a stalk shows its joints.</p>
+<img class="mark" src="logo.png" alt="Sliced bamboo stalk logo">
+<div><img src="banner.png" alt="crypto-x509-analyzer wordmark banner" style="max-width:100%"></div>
+<p>
+<span class="btn">Read the Certificate</span>
+<span class="btn">Show the Full Log</span>
+<span class="btn">Show the Grove Notes</span>
+</p>
 </header>
-
 <main>
-  <section class="rail">
-    <nav aria-label="on this page">
-      <p class="mono"><a href="#run">Run it</a><br>
-      <a href="#files">The files</a><br>
-      <a href="#sheets">The sheets</a><br>
-      <a href="https://github.com/ShadowGuard-AI/crypto-x509-analyzer">The repo</a></p>
-    </nav>
-    <div>
-      <p class="lede">Crypto X509 Analyzer is one of my projects. The README in the repo is short, so this page sticks to what the files themselves show.</p>
-      <div class="grid">
-        <div class="card pop"><h3>What it is</h3>
-          <p>Crypto X509 Analyzer: 3 files, 177 counted
-          lines across Python 161, Markdown 15, Text 1. One job, done in the
-          open, in files you can read.</p></div>
-        <div class="card pop"><h3>The biggest piece</h3>
-          <p><code>main.py</code> carries the most
-          lines. If the project grows, that file is where the growth
-          lands first, for better or worse.</p></div>
-        <div class="card pop"><h3>The honest gap</h3>
-          <p>No test files yet. That is the honest gap, and the roadmap in the visuals folder says what the first one should cover.</p></div>
-      </div>
-      <section id="run">
-        <h2>Run it</h2>
-        <p>The repo README has the exact commands for this one. The
-        shape is the shape for most of my projects: clone it, read the
-        top file first so you know what will happen, then run it on
-        something you do not mind breaking.</p>
-        <p class="mono">$ git clone https://github.com/ShadowGuard-AI/crypto-x509-analyzer.git<br>$ cd crypto-x509-analyzer</p>
-      </section>
-      
-  <section aria-label="real code">
-    <h2>The code, as it sits in the repo</h2>
-    <p>From <code>main.py</code>, line 12 on. I did
-    not tidy it for the page. What you see is what the file has.</p>
-    <pre class="code"><code>logging.basicConfig(level=logging.INFO, format=&#x27;%(asctime)s - %(levelname)s - %(message)s&#x27;)
+<section>
+<h2><span class="marker">1</span>One Certificate at a Time</h2>
+<p>This is a deliberately modest utility. Given one X.509 certificate, the program records its observations in a log: it examines the validity dates, inspects which signature algorithm was used, looks at three extensions, and tries the signature against the public key belonging to that same certificate. It writes no file, alters nothing, and validates no chain.</p>
+<div class="warn"><strong>The Signature Test Is Self Signed Only.</strong> Trying a signature against the certificate's own key is a self-signed consistency experiment. It yields a genuine verdict solely when the certificate is self-signed. A certificate from a certificate authority was signed with the issuer's key, so this experiment reports failure even on a perfectly healthy authority-issued certificate. A real verdict for such a certificate would need the issuer certificate's public key, and this utility accepts no issuer certificate argument.</div>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">2</span>Before the Walk: Requirements and Launch</h2>
+<p>Running the tool presupposes Python 3 together with the cryptography package at version 41.0.7 or newer, the floor recorded in the requirements file. Because main.py imports that package at the head of the file, a machine lacking it halts at the imports even when only help output was wanted, and no help output appears.</p>
+<p>Acquisition, exactly as published:</p>
+<pre>git clone https://github.com/ShadowGuard-AI/crypto-x509-analyzer
+cd crypto-x509-analyzer
+pip install -r requirements.txt</pre>
+<p>The clone line is accurate as it stands: it names ShadowGuard-AI with its hyphen and carries no .git ending. The only invocation shape that works is <code>python3 main.py &lt;certificate path&gt;</code>, run from inside the cloned directory, with <code>-v</code> or <code>--verbose</code> appended for debug level logging. No executable and no installable package bears the repository name.</p>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">3</span>Arguments, in Parser Order</h2>
+<ul>
+<li><code>certificate_path</code>: positional, obligatory, a PEM encoded certificate.</li>
+<li><code>-v</code>, <code>--verbose</code>: raises logging to DEBUG level.</li>
+<li><code>-h</code>: help, provided by argparse.</li>
+</ul>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">4</span>Loading, the Calendar, and Three Weak OIDs Named</h2>
+<p>The program reads the nominated file as uninterpreted bytes. A file that cannot be found logs an error; a read failure logs an error; either way the run finishes with exit code 1. The bytes are then loaded strictly as PEM. DER input is turned away with a message requesting PEM format, and the run also finishes at exit 1.</p>
+<p>Calendar examination follows the code's own order: a warning when the beginning of validity falls after the end, a warning when the beginning still lies in the future, and a warning when the end has already gone by. The latter two comparisons rely on the clock of the machine running the tool, so an incorrectly set clock can make a healthy certificate appear premature or overdue.</p>
+<p>The signature algorithm object identifier is logged. Exactly three identifiers attract a weak warning: RSA with MD5, RSA with SHA1, and DSA with SHA1. No other identifier attracts that warning. ECDSA with SHA1 and RSA with MD2 pass without it, and an absence of warning means only that none of the three appeared.</p>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">5</span>Three Extensions, Then the Signature</h2>
+<p>Key Usage is logged, and its absence provokes a warning describing the absence as a possible security risk. Basic Constraints is logged, with a true CA value reported as a CA certificate and a false value as an end entity certificate; a missing Basic Constraints is merely logged as not found, with no warning. Subject Alternative Name is logged, and if missing, likewise logged as not found without a warning. No other extension is opened, and the critical marker on any extension is never examined.</p>
+<p>Signature testing branches by key family: RSA keys with PKCS1v15 padding and the certificate hash, ECDSA keys with ECDSA and that hash, Ed25519 keys with no hash argument, DSA keys with the hash handed over directly. An unsupported key family ends as a logged error inside the experiment, while the run still reports success. Success brings a log line clarifying that neither issuer checking nor chain checking has taken place. Key length receives no examination for any key family, and chain validation, revocation checking, and hostname checking appear nowhere in the code.</p>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">6</span>The Second CA Pass, and the Duplicated Subject</h2>
+<p>After the signature attempt, the program fetches Key Usage and Basic Constraints a second time and complains when a CA certificate has a Key Usage that omits keyCertSign. In this second pass a missing extension passes without comment, even though the earlier pass logged that same absence, so the two passes can give differing impressions of one certificate. The run winds up by logging issuer and subject, and subject was already logged when the run began, so it shows up twice in total.</p>
+</section>
+<hr class="divider">
+<section>
+<h2><span class="marker">7</span>Findings Never Change the Exit, and the Licensing Picture</h2>
+<p>Everything discovered lives only in the log, and no discovery alters the exit code. An expired certificate, a suspect algorithm, and an unsuccessful signature experiment each still finish at exit 0. Exit 1 carries a single meaning: the certificate file could not be read, or could not be parsed.</p>
+<p>Licensing, honestly: the README licence line reads <code>Copyright (c) ShadowStrikeHQ</code>, reproduced here exactly as published, including its mistake; it does not match the organisation in the install line, and the flag stands in place rather than being silently corrected. Separately, the repository LICENSE file contains the MIT License, whose holder credit combines a pen name with a lone initial standing for the other name, recorded here without spelling that initial out.</p>
+</section>
+<section>
+<h2>The Record as Published</h2>
+<p>The live README, preserved verbatim:</p>
+<pre>![Banner](banner.png)
 
-def setup_argparse():
-    &quot;&quot;&quot;
-    Sets up the argument parser for the command-line interface.
+# crypto-x509-analyzer
+A tool to parse and analyze X.509 certificates, highlighting potential vulnerabilities such as weak signature algorithms, expired dates, or missing critical extensions. - Focused on Basic cryptographic operations
 
-    Returns:
-        argparse.ArgumentParser: The configured argument parser.
-    &quot;&quot;&quot;
-    parser = argparse.ArgumentParser(description=&quot;X.509 Certificate Analyzer&quot;)
-    parser.add_argument(&quot;certificate_path&quot;, help=&quot;Path to the X.509 certificate file.&quot;)
-    parser.add_argument(&quot;-v&quot;, &quot;--verbose&quot;, action=&quot;store_true&quot;, help=&quot;Enable verbose logging (DEBUG level).&quot;)
-    return parser
+What the signature line means: the tool checks the certificate signature against the certificate's own public key. That is a self-signed consistency check, and it is a real signature verdict only for a self-signed certificate. A CA issued certificate was signed with the issuer's key, so this check fails on sound CA issued certificates; a real signature verdict for one needs the issuer certificate's public key, and this tool does not take an issuer certificate argument. Findings are reported in the log only: no finding, including an expired certificate or a weak signature algorithm, changes the exit code. The run exits 1 only when the certificate file cannot be read or parsed.
 
+## Install
+`git clone https://github.com/ShadowGuard-AI/crypto-x509-analyzer`
+Then install the one dependency from the cloned directory: `pip install -r requirements.txt`
 
-def analyze_certificate(cert_path):
-    &quot;&quot;&quot;
-    Analyzes an X.509 certificate file for potential vulnerabilities.
+## Usage
+`python3 main.py [-h] [-v] certificate_path`, run from the cloned directory. There is no executable or package by the repo name. Input must be a PEM encoded certificate; DER input is not accepted and fails with an error asking for PEM format.
 
-    Args:
-        cert_path (str): The path to the certificate file.</code></pre>
-  </section>
-      <section id="files">
-        <h2>The files that matter</h2>
-        <table><tr><th>File</th><th>Lines</th></tr>
-        <tr><td><code>main.py</code></td><td>161</td></tr>
-        <tr><td><code>README.md</code></td><td>15</td></tr>
-        <tr><td><code>requirements.txt</code></td><td>1</td></tr>
-        </table>
-        <p>Names doing the work: <span class="mono">setup_argparse, analyze_certificate, main</span>.</p>
-      </section>
-      <section id="sheets">
-        <h2>Drawn by hand</h2>
-        <p>I sketch my projects on notebook paper so I have to
-        understand them well enough to draw them. The full set,
-        with the counts and how they were counted, is the
-        <a href="https://github.com/ShadowGuard-AI/crypto-x509-analyzer/tree/main/crypto-x509-analyzer-Visuals">crypto-x509-analyzer-Visuals</a>
-        folder in the repo. Nothing is drawn over the binder holes.
-        That is a rule, not a style.</p>
-        <div class="shots">
-          <img src="assets/architecture.png" alt="Hand drawn architecture sheet for Crypto X509 Analyzer">
-          <img src="assets/flowchart.png" alt="Hand drawn flowchart sheet for Crypto X509 Analyzer">
-          <img src="assets/product-map.png" alt="Hand drawn product map sheet for Crypto X509 Analyzer">
-        </div>
-      </section>
-    </div>
-  </section>
+## Parameters
+- `certificate_path`: Path to the X.509 certificate file (PEM format). Required.
+- `-h`: Show help message and exit
+- `-v`: Enable verbose logging (DEBUG level).
+
+## License
+Copyright (c) ShadowStrikeHQ</pre>
+</section>
 </main>
-<footer>
-  <p>Crypto X509 Analyzer is one of my projects. This page was written
-  from the repo itself on 2026-10-30: the counts are the
-  repo's counts, the code is the repo's code, and the gaps are the
-  repo's gaps.</p>
-</footer>
+<footer>crypto-x509-analyzer: Bamboo Forest After Rain. A themed re-skin; the tool and its facts are unchanged.</footer>
 </body>
 </html>
